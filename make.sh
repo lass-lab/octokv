@@ -17,6 +17,7 @@ echo "make"
 make -C $test_root hello_world_bdev_shared_combo
 
 echo "run"
-sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPDK_LIB_DIR:$DPDK_LIB_DIR:$VFIO_LIB_DIR:"$test_root/passthru" $test_root/hello_world/hello_bdev --json $test_root/hello_world/bdev_external.json -b TestPT
+#sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPDK_LIB_DIR:$DPDK_LIB_DIR:$VFIO_LIB_DIR:"$test_root/passthru" $test_root/hello_world/hello_bdev --json $test_root/hello_world/bdev_external.json -b TestPT
+sudo LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SPDK_LIB_DIR:$DPDK_LIB_DIR:$VFIO_LIB_DIR:"$test_root/passthru" $test_root/hello_world/hello_bdev --json $test_root/pass.json -m [0-19]
 
 sudo $SPDK_DIR/scripts/setup.sh reset

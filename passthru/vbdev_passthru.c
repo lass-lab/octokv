@@ -37,6 +37,9 @@
  */
 
 #include "spdk/stdinc.h"
+#include "sys/time.h"
+#include "time.h"
+#include "stdio.h"
 
 #include "vbdev_passthru.h"
 #include "spdk/rpc.h"
@@ -49,13 +52,18 @@
 #include "spdk/bdev_module.h"
 #include "spdk/log.h"
 
-
+int fin0 = 0;
 static int vbdev_passthru_init(void);
 static int vbdev_passthru_get_ctx_size(void);
 static void vbdev_passthru_examine(struct spdk_bdev *bdev);
 static void vbdev_passthru_finish(void);
 static int vbdev_passthru_config_json(struct spdk_json_write_ctx *w);
-
+/*
+struct timeval {
+	time_t tv_sec;
+	suseconds_t tv_usec;
+}
+*/
 static struct spdk_bdev_module passthru_if = {
 	.name = "passthru_external",
 	.module_init = vbdev_passthru_init,
@@ -173,8 +181,31 @@ _pt_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 {
 	struct spdk_bdev_io *orig_io = cb_arg;
 	int status = success ? SPDK_BDEV_IO_STATUS_SUCCESS : SPDK_BDEV_IO_STATUS_FAILED;
-	struct passthru_bdev_io *io_ctx = (struct passthru_bdev_io *)orig_io->driver_ctx;
+	int tt = 0;
+	struct passthru_bdev_io *io_ctx= (struct passthru_bdev_io *)orig_io->driver_ctx;
 
+	time_t t;
+	struct tm *lt;
+	struct timeval tv;
+	
+	char buff[4096];
+	char *pp;
+	fin0 = 0;
+/*	
+	t = gettimeofday(&tv, NULL);
+
+	lt = localtime(&tv.tv_sec);*/
+	/*
+	printf("fin시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
+			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);
+	*/	
+	/* log 용 출력 */
+	//printf("opcode-bdev,orig:0x%x 0x%x\n",bdev_io->u.nvme_passthru.cmd.opc, orig_io->u.nvme_passthru.cmd.opc);
+	//printf("bdev_io->u.nvme_passthru.buf:%s\n",bdev_io->u.nvme_passthru.buf);
+	//printf("orig_io->u.nvme_passthru.buf:%s,%d\n",orig_io->u.nvme_passthru.buf,orig_io->u.nvme_passthru.buf);
+	//printf("buf:%s,%d\n",bdev_io->u.bdev.iovs[0].iov_base,bdev_io->u.bdev.iovs[0]);
+	
 	/* We setup this value in the submission routine, just showing here that it is
 	 * passed back to us.
 	 */
@@ -182,12 +213,66 @@ _pt_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 		SPDK_ERRLOG("Error, original IO device_ctx is wrong! 0x%x\n",
 			    io_ctx->test);
 	}
-
+	
 	/* Complete the original IO and then free the one that we created here
 	 * as a result of issuing an IO via submit_request.
 	 */
 	spdk_bdev_io_complete(orig_io, status);
 	spdk_bdev_free_io(bdev_io);
+	//printf("_pt_complete_io:spdk_bdev_free_io\n");
+
+/*
+	t = gettimeofday(&tv, NULL);
+	lt = localtime(&tv.tv_sec);
+	printf("fin시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
+			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);*/
+}
+
+static void
+write_complete2(struct spdk_bdev_io *bdev_io, bool success, void *ch_arg)
+{
+	struct spdk_bdev_io *orig_io = ch_arg;	
+	//struct vbdev_passthru *orig_io = ch_arg;
+	//in out 순서에 대해 확신이 있으면 아래걸로 바꾸면 됨
+
+	/*
+	if(fin0 == 99){	
+			_pt_complete_io(bdev_io, success, orig_io);
+	}
+	else{
+		fin0 = fin0 + 1;
+	}
+	*/
+	
+	if((bdev_io->u.bdev.offset_blocks-orig_io->u.nvme_passthru.cmd.cdw10)==(orig_io->u.nvme_passthru.cmd.cdw12)){
+		//printf("value:%d\n",(bdev_io->u.bdev.offset_blocks-orig_io->u.nvme_passthru.cmd.cdw10)-(orig_io->u.nvme_passthru.cmd.cdw12));
+		if(bdev_io->u.nvme_passthru.cmd.opc == 0xC1){
+			//printf("finish C1\n");
+			_pt_complete_io(bdev_io, success, orig_io);
+		}
+		else{
+			_pt_complete_io(bdev_io, success, orig_io);
+		}
+	}
+	else{
+		//printf("key:%d,startblock_num:%d\n",orig_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.bdev.offset_blocks);
+		//printf("value2:%d,%d,%d\n",(bdev_io->u.bdev.offset_blocks),(orig_io->u.nvme_passthru.cmd.cdw10),(orig_io->u.nvme_passthru.cmd.cdw12-1));
+		if(bdev_io->u.nvme_passthru.cmd.opc == 0xC1){
+			//printf("finish C1\n");
+			_pt_complete_io(bdev_io, success, orig_io);
+		}
+		else{
+			_pt_complete_io(bdev_io, success, orig_io);
+		}
+	}
+	if(fin0 == orig_io->u.nvme_passthru.cmd.cdw12){
+		_pt_complete_io(bdev_io, success, orig_io);
+	}
+	else{
+		fin0 = fin0 + 1;
+	}
+	
 }
 
 static void
@@ -296,8 +381,26 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 	struct vbdev_passthru *pt_node = SPDK_CONTAINEROF(bdev_io->bdev, struct vbdev_passthru, pt_bdev);
 	struct pt_io_channel *pt_ch = spdk_io_channel_get_ctx(ch);
 	struct passthru_bdev_io *io_ctx = (struct passthru_bdev_io *)bdev_io->driver_ctx;
-	int rc = 0;
+	struct spdk_bdev_io *bdev_io2, *bdev_io3;
 
+	time_t t;
+	struct tm *lt;
+	struct timeval tv;
+	int rc = 0;
+	/*
+	if((t = gettimeofday(&tv, NULL)) == -1) {
+		perror("gettimeofday() call error");
+	}
+	if((lt = localtime(&tv.tv_sec)) == NULL) {
+		perror("localtime() call error");
+	}
+	
+	printf("sta 시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
+			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);
+
+	int rc = 0;
+	*/
 	/* Setup a per IO context value; we don't do anything with it in the vbdev other
 	 * than confirm we get the same thing back in the completion callback just to
 	 * demonstrate.
@@ -306,15 +409,34 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 
 	switch (bdev_io->type) {
 	case SPDK_BDEV_IO_TYPE_READ:
+			/*
+			printf("opcode:%u,fuse:%u,rsvd%u,psdt%u,nsid%u,rsvd2%u,rsvd3%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",
+					bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.fuse,
+					bdev_io->u.nvme_passthru.cmd.rsvd1,bdev_io->u.nvme_passthru.cmd.psdt,
+					bdev_io->u.nvme_passthru.cmd.nsid,bdev_io->u.nvme_passthru.cmd.rsvd2,
+					bdev_io->u.nvme_passthru.cmd.rsvd3,
+					bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);*/
+		//printf("********read-offset_block, num_block:%u,%u\n",bdev_io->u.bdev.offset_blocks, bdev_io->u.bdev.num_blocks);
 		spdk_bdev_io_get_buf(bdev_io, pt_read_get_buf_cb,
 				     bdev_io->u.bdev.num_blocks * bdev_io->bdev->blocklen);
 		break;
 	case SPDK_BDEV_IO_TYPE_WRITE:
+		
+		/*
+		printf("sta 시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
+			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);*/
+		//printf("********write-offset_block, num_block:%u,%u\n",bdev_io->u.bdev.offset_blocks, bdev_io->u.bdev.num_blocks);
+		
 		if (bdev_io->u.bdev.md_buf == NULL) {
+			//bdev_chunk(pt_node->base_desc, pt_ch->base_ch,
+			//	bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
+		
 			rc = spdk_bdev_writev_blocks(pt_node->base_desc, pt_ch->base_ch, bdev_io->u.bdev.iovs,
 						     bdev_io->u.bdev.iovcnt, bdev_io->u.bdev.offset_blocks,
 						     bdev_io->u.bdev.num_blocks, _pt_complete_io,
 						     bdev_io);
+							 
 		} else {
 			rc = spdk_bdev_writev_blocks_with_md(pt_node->base_desc, pt_ch->base_ch,
 							     bdev_io->u.bdev.iovs, bdev_io->u.bdev.iovcnt,
@@ -323,6 +445,7 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 							     bdev_io->u.bdev.num_blocks,
 							     _pt_complete_io, bdev_io);
 		}
+		
 		break;
 	case SPDK_BDEV_IO_TYPE_WRITE_ZEROES:
 		rc = spdk_bdev_write_zeroes_blocks(pt_node->base_desc, pt_ch->base_ch,
@@ -355,6 +478,68 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 	case SPDK_BDEV_IO_TYPE_ABORT:
 		rc = spdk_bdev_abort(pt_node->base_desc, pt_ch->base_ch, bdev_io->u.abort.bio_to_abort,
 				     _pt_complete_io, bdev_io);
+		break;
+	case SPDK_BDEV_IO_TYPE_NVME_IO:
+		/*
+		if(bdev_io->u.nvme_passthru.cmd.opc==0xA1){
+			printf("opcode:%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);	
+			printf("buf:%s,%d\n",bdev_io->u.nvme_passthru.buf,bdev_io->u.nvme_passthru.buf);
+			spdk_bdev_write(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
+		}
+		*/
+		if(bdev_io->u.nvme_passthru.cmd.opc==0xA2){
+			//opcode, offset_block, num_block 출력해보기
+			printf("opcode:%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+			//buffer 잘 비어있는지 확인하기
+			printf("buf:%s,%d\n",bdev_io->u.nvme_passthru.buf,bdev_io->u.nvme_passthru.buf);
+			//read command 보내기
+			spdk_bdev_read(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
+		}
+		else if(bdev_io->u.nvme_passthru.cmd.opc==0xC2){
+			printf("C2_opcode:%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+			bdev_add_search(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
+
+		}
+		else if(bdev_io->u.nvme_passthru.cmd.opc==0xB1){
+			/*
+			printf("sta 시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
+				lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+				lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);*/
+			/*
+			int ii=0;
+			for(ii=0;ii<=bdev_io->u.nvme_passthru.cmd.cdw12;ii++){
+				printf("here%d\n",ii);
+				spdk_bdev_write(pt_node->base_desc, pt_ch->base_ch,
+					bdev_io->u.nvme_passthru.buf + (ii*512), (bdev_io->u.nvme_passthru.cmd.cdw10+ii)*512,512,write_complete2, bdev_io);
+
+			}
+			*/
+			/*printf("opcode:%u,fuse:%u,rsvd%u,psdt%u,nsid%u,rsvd2%u,rsvd3%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",
+					bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.fuse,
+					bdev_io->u.nvme_passthru.cmd.rsvd1,bdev_io->u.nvme_passthru.cmd.psdt,
+					bdev_io->u.nvme_passthru.cmd.nsid,bdev_io->u.nvme_passthru.cmd.rsvd2,
+					bdev_io->u.nvme_passthru.cmd.rsvd3,
+					bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);*/
+			bdev_chunk(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
+		}
+		else if(bdev_io->u.nvme_passthru.cmd.opc==0xA0){
+			printf("A0_opcode:%u,key(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+			
+			bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
+		}
+		else if(bdev_io->u.nvme_passthru.cmd.opc==0xC1){
+			//printf("C1_opcode:%u,key(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+
+			//printf("offset_block(cdw10):%u,num_block(cdw12):%u\n",	
+			//		bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+			bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,
+				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
+		}
 		break;
 	default:
 		SPDK_ERRLOG("passthru: unknown I/O type %d\n", bdev_io->type);
@@ -403,6 +588,7 @@ vbdev_passthru_get_io_channel(void *ctx)
 	 * our channel create callback to populate any elements that we need to
 	 * update.
 	 */
+	printf("vbdev_passthru_get_io_channel.*************************************************************************\n");
 	pt_ch = spdk_get_io_channel(pt_node);
 
 	return pt_ch;
