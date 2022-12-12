@@ -31,7 +31,7 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-ALL_DEPDIRS+= hello_world passthru nvme
+ALL_DEPDIRS+= hello_world rout passthru nvme
 
 ifneq ($(SPDK_HEADER_DIR),)
 COMMON_CFLAGS+=-I$(SPDK_HEADER_DIR)
@@ -55,10 +55,10 @@ all: hello_world_bdev_shared_combo
 
 static: hello_world_bdev_static
 
-hello_world_bdev_shared_combo: passthru_shared
+hello_world_bdev_shared_combo: passthru_shared rout_shared
 	$(MAKE) --directory=hello_world bdev_shared_combo
 
-hello_world_bdev_shared_iso: passthru_shared
+hello_world_bdev_shared_iso: passthru_shared rout_shared
 	$(MAKE) --directory=hello_world bdev_shared_iso
 
 hello_world_no_bdev_shared_combo:
@@ -67,11 +67,17 @@ hello_world_no_bdev_shared_combo:
 hello_world_no_bdev_shared_iso:
 	$(MAKE) --directory=hello_world alone_shared_iso
 
-hello_world_bdev_static: passthru_static
+hello_world_bdev_static: passthru_static rout_shared
 	$(MAKE) --directory=hello_world bdev_static
 
 hello_world_no_bdev_static:
 	$(MAKE) --directory=hello_world alone_static
+# rout
+rout_shared:
+	$(MAKE) --directory=rout shared
+
+rout_static:
+	$(MAKE) --directory=rout static
 
 passthru_shared:
 	$(MAKE) --directory=passthru shared
@@ -79,6 +85,14 @@ passthru_shared:
 passthru_static:
 	$(MAKE) --directory=passthru static
 
+# rout
+#rout_shared:
+#	$(MAKE) --directory=rout shared
+
+#rout_static:
+#	$(MAKE) --directory=rout static
+
 clean:
 	rm -f ./hello_world/hello_bdev
+	rm -f ./rout/librout_external.*
 	rm -f ./passthru/libpassthru_external.*

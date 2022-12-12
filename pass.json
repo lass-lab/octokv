@@ -65,13 +65,20 @@
             "prchk_guard": false
           }
         },
-	{
-	"method": "construct_ext_passthru_bdev",
-	"params": {
-		"base_bdev_name": "Nvme0n1",
-		"name": "newthing"
-	}
-	},
+		{
+			"method": "construct_ext_passthru_bdev",
+			"params": {
+			  "base_bdev_name": "Nvme0n1",
+			  "name": "newthing"
+			}
+		},
+		{
+			"method": "construct_ext_rout_bdev",
+			"params": {
+				"base_bdev_name": "newthing",
+				"name": "newthing2"
+			}
+		},
         {
           "method": "bdev_nvme_set_hotplug",
           "params": {
@@ -151,7 +158,7 @@
             "listen_address": {
               "trtype": "TCP",
               "adrfam": "IPv4",
-              "traddr": "163.239.27.95",
+              "traddr": "172.16.10.3",
               "trsvcid": "4420"
             }
           }
@@ -162,7 +169,7 @@
             "nqn": "nqn.2016-06.io.spdk:cnode1",
             "namespace": {
               "nsid": 1,
-              "bdev_name": "newthing",
+              "bdev_name": "newthing2",
               "nguid": "43C5D121B6144FD0A07342658156D0BF",
               "uuid": "43c5d121-b614-4fd0-a073-42658156d0bf"
             }
