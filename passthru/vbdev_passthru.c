@@ -52,6 +52,9 @@
 #include "spdk/bdev_module.h"
 #include "spdk/log.h"
 
+int art[6];
+int tpt;
+
 int fin0 = 0;
 double tsum = 0;
 static int vbdev_passthru_init(void);
@@ -67,6 +70,7 @@ struct spdk_io_channel *ch_all4;
 int g_cnt = 0;
 int g_cnt2 = 0;
 int g_cnt3 = 0;
+int sec;
 
 /*
 struct timeval {
@@ -263,114 +267,21 @@ _pt_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 	struct spdk_thread *thread_now = spdk_get_thread();
 	time_t t;struct tm *lt;struct timeval tv;
 	
-	//char buff[4096];
-	//char *pp;
-	//fin0 = 0;
-	/*	
-	t = gettimeofday(&tv, NULL);
-
-	lt = localtime(&tv.tv_sec);
-	
-	printf("fin시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
-			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);
-	*/	
-	/* log 용 출력 */
-	//printf("opcode-bdev,orig:0x%x 0x%x\n",bdev_io->u.nvme_passthru.cmd.opc, orig_io->u.nvme_passthru.cmd.opc);
-	//printf("bdev_io->u.nvme_passthru.buf:%s\n",bdev_io->u.nvme_passthru.buf);
-	//printf("orig_io->u.nvme_passthru.buf:%s,%d\n",orig_io->u.nvme_passthru.buf,orig_io->u.nvme_passthru.buf);
-	//printf("buf:%s,%d\n",bdev_io->u.bdev.iovs[0].iov_base,bdev_io->u.bdev.iovs[0]);
-	
-	/* We setup this value in the submission routine, just showing here that it is
-	 * passed back to us.
-	 */
-	/*
-	if(orig_io->u.nvme_passthru.cmd.opc==0xC1){
-		double end = (((double)clock()) / CLOCKS_PER_SEC);
-		tsum += end-(pt_node->start);
-		if(((++fin0)%100000)==0){
-			printf("I/O time in passthru bdev %d개 average: %lf\n",fin0, tsum/fin0);
-		}
-	}*/
-	
-
 	if (io_ctx->test != 0x5a) {
 		SPDK_ERRLOG("Error, original IO device_ctx is wrong! 0x%x,opc:0x%x,status:%d\,success:%d\n",
 			    io_ctx->test,orig_io->u.nvme_passthru.cmd.opc,status,SPDK_BDEV_IO_STATUS_SUCCESS);
 	}
 	
-	/* Complete the original IO and then free the one that we created here
-	 * as a result of issuing an IO via submit_request.
-	 */
-	//SPDK_NOTICELOG("passthru orig_0x%x,status:%d\n",orig_io->u.nvme_passthru.cmd.opc,status);
-	//SPDK_NOTICELOG("passthru complete thread:%d\n",thread_now->id);
-
 	spdk_bdev_io_complete(orig_io, status);
 	spdk_bdev_free_io(bdev_io);
-	//msg_queue_run_batch(thread_now, 1020);
-	//printf("_pt_complete_io:spdk_bdev_free_io\n");
-
-/*
-	t = gettimeofday(&tv, NULL);
-	lt = localtime(&tv.tv_sec);
-	printf("fin시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
-			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);*/
 }
 
 static void
 back_complete(struct spdk_bdev_io *bdev_io, bool success, void *ch_arg)
 {
-	//SPDK_NOTICELOG("fin\n");
 	spdk_bdev_free_io(bdev_io);
-	//SPDK_NOTICELOG("fin\n");
 }
 
-static void
-write_complete2(struct spdk_bdev_io *bdev_io, bool success, void *ch_arg)
-{
-	struct spdk_bdev_io *orig_io = ch_arg;	
-	//struct vbdev_passthru *orig_io = ch_arg;
-	//in out 순서에 대해 확신이 있으면 아래걸로 바꾸면 됨
-
-	/*
-	if(fin0 == 99){	
-			_pt_complete_io(bdev_io, success, orig_io);
-	}
-	else{
-		fin0 = fin0 + 1;
-	}
-	*/
-	
-	if((bdev_io->u.bdev.offset_blocks-orig_io->u.nvme_passthru.cmd.cdw10)==(orig_io->u.nvme_passthru.cmd.cdw12)){
-		//printf("value:%d\n",(bdev_io->u.bdev.offset_blocks-orig_io->u.nvme_passthru.cmd.cdw10)-(orig_io->u.nvme_passthru.cmd.cdw12));
-		if(bdev_io->u.nvme_passthru.cmd.opc == 0xC1){
-			//printf("finish C1\n");
-			_pt_complete_io(bdev_io, success, orig_io);
-		}
-		else{
-			_pt_complete_io(bdev_io, success, orig_io);
-		}
-	}
-	else{
-		//printf("key:%d,startblock_num:%d\n",orig_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.bdev.offset_blocks);
-		//printf("value2:%d,%d,%d\n",(bdev_io->u.bdev.offset_blocks),(orig_io->u.nvme_passthru.cmd.cdw10),(orig_io->u.nvme_passthru.cmd.cdw12-1));
-		if(bdev_io->u.nvme_passthru.cmd.opc == 0xC1){
-			//printf("finish C1\n");
-			_pt_complete_io(bdev_io, success, orig_io);
-		}
-		else{
-			_pt_complete_io(bdev_io, success, orig_io);
-		}
-	}
-	if(fin0 == orig_io->u.nvme_passthru.cmd.cdw12){
-		_pt_complete_io(bdev_io, success, orig_io);
-	}
-	else{
-		fin0 = fin0 + 1;
-	}
-	
-}
 
 static void
 _pt_complete_zcopy_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
@@ -486,18 +397,6 @@ passthru_submit_request(void *ctx){
 	struct pt_io_channel *pt_ch = spdk_io_channel_get_ctx(ch);
 	struct spdk_bdev_channel *channel = spdk_io_channel_get_ctx(ch);
 	SPDK_NOTICELOG("rout_sub\n");
-	//  struct spdk_bdev_io *bdev_io_D;
-	//  bdev_io_D = bdev_channel_get_io(channel);
-
-	//bdev_io_D = bdev_io;
-	//  bdev_io->u.nvme_passthru.cmd.opc = 0xD1;
-	//  bdev_io_D->u.nvme_passthru.cmd.nsid = 1;
-	//bdev_io->internal.ch = channel;
-	//struct passthru_bdev_io *io_ctx2 = (struct passthru_bdev_io *)bdev_io->driver_ctx;
-	//io_ctx2->test = 0x5a;
-	//io_ctx2->thread = ch->thread;
-	//spdk_bdev_nvme_io_passthru2(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-	//		bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _back_complete_io, bdev_io);
 	bdev_add_translate(pt_node->base_desc, pt_ch->base_ch, bdev_io->u.nvme_passthru.buf, 
 		bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512, back_complete, bdev_io);
 }
@@ -514,54 +413,8 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 	struct pt_io_channel *pt_ch2;
 	struct passthru_bdev_io *io_ctx = (struct passthru_bdev_io *)bdev_io->driver_ctx;
 	struct spdk_bdev_io *bdev_io2, *bdev_io3;
-	/*
-	time_t t;
-	struct tm *lt;
-	struct timeval tv;
-	
-	t = gettimeofday(&tv, NULL);
-
-	lt = localtime(&tv.tv_sec);
-
-	printf("sta시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
-			lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-			lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);*/
 	int rc = 0;
-	/* Setup a per IO context value; we don't do anything with it in the vbdev other
-	 * than confirm we get the same thing back in the completion callback just to
-	 * demonstrate.
-	 */
 	io_ctx->test = 0x5a;
-	//SPDK_NOTICELOG("______________________________________\n");
-/*	
-	if(ch->thread->id == 3 && g_cnt == 0){
-		ch_all = ch;
-		g_cnt = 1;
-		SPDK_NOTICELOG("ch_all:%d,ch:%d________\n",ch_all->thread->id,ch->thread->id);
-	}
-	else if(ch->thread->id == 5 && g_cnt2 == 0){
-		ch_all2 = ch;
-		g_cnt2 = 1;
-		SPDK_NOTICELOG("ch_all2:%d,ch:%d_________\n",ch_all2->thread->id,ch->thread->id);
-	}*/
-	/*
-	if(g_cnt == 0 && ch->thread->id < 10 && ch->thread->id > 0){
-		ch_all = ch;
-		g_cnt = 1;
-		//SPDK_NOTICELOG("**********ch_all:%d\n",ch_all->thread->id);
-	}
-	else if(g_cnt2 == 0 && ch_all->thread->id != ch->thread->id){
-		ch_all2 = ch;
-		g_cnt2 = 1;
-		//SPDK_NOTICELOG("**********ch_all2:%d\n",ch_all2->thread->id);
-	}
-	else if(g_cnt3 == 0 && ch_all->thread->id != ch->thread->id && ch_all2->thread->id != ch->thread->id){
-		ch_all3 = ch;
-		g_cnt3 = 1;
-		SPDK_NOTICELOG("**********ch_all3:%d\n",ch_all3->thread->id);
-	}*/
-
-
 
 
 	switch (bdev_io->type) {
@@ -619,87 +472,17 @@ vbdev_passthru_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *b
 				     _pt_complete_io, bdev_io);
 		break;
 	case SPDK_BDEV_IO_TYPE_NVME_IO:
-		
-		if(bdev_io->u.nvme_passthru.nbytes == 1024){
-				//SPDK_NOTICELOG("in here@@@@@#######\n");
-				bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,bdev_io->u.nvme_passthru.buf, 
-						0,1024,_pt_complete_io, bdev_io);
-				break;
-
-		}
-		if(bdev_io->u.nvme_passthru.cmd.opc==0xA2){
-			spdk_bdev_read(pt_node->base_desc, pt_ch->base_ch,
-				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
-		}
-		else if(bdev_io->u.nvme_passthru.cmd.opc==0xC2){
-			//SPDK_NOTICELOG("C2_opcode:%u,offset_block(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
+		if(bdev_io->u.nvme_passthru.cmd.opc==0xC2){
+			//spdk_bdev_read(pt_node->base_desc, pt_ch->base_ch,
+			// bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10%*512, bdev_io->u.nvme_passthri.cmd.cdw12**512,_pt_complete_io, bdev_io);
 			bdev_add_search(pt_node->base_desc, pt_ch->base_ch,
 				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
-
-		}
-		else if(bdev_io->u.nvme_passthru.cmd.opc==0xD1){
-				/*
-				if(ch_all3 !=NULL && ch_all3->thread->id >0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1){
-
-					SPDK_NOTICELOG("D3___passthru_ch:%d\n",ch_all3->thread->id);
-					pt_ch2 = spdk_io_channel_get_ctx(ch_all3);
-					spdk_thread_send_msg(ch_all3->thread, passthru_submit_request, bdev_io);
-				}
-				else if(ch_all2 !=NULL && ch_all2->thread->id >0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1){
-					
-					SPDK_NOTICELOG("D2___passthru_ch:%d\n",ch_all2->thread->id);
-					pt_ch2 = spdk_io_channel_get_ctx(ch_all2);
-					spdk_thread_send_msg(ch_all2->thread, passthru_submit_request, bdev_io);
-				}*/
-			//	_pt_complete_io(bdev_io, 1,bdev_io);
-			//	spdk_bdev_write(pt_node->base_desc, pt_ch->base_ch, bdev_io->u.nvme_passthru.buf,
-			//			0, bdev_io->u.nvme_passthru.nbytes,_pt_complete_io, bdev_io);
-				bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,bdev_io->u.nvme_passthru.buf, 
-						bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
-			/*
-			if(ch_all != NULL && ch_all->thread->id != ch->thread->id){
-				SPDK_NOTICELOG("ch_all_thread:%d\n",ch_all->thread->id);
-				pt_ch2 = spdk_io_channel_get_ctx(ch_all);
-				bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,bdev_io->u.nvme_passthru.buf, 
-						bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,back_complete, bdev_io);
-				bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,bdev_io->u.nvme_passthru.buf, 
-						bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,back_complete, bdev_io);
-			}
-			else if(ch_all2 !=NULL && ch_all2->thread->id != ch->thread->id){
-				SPDK_NOTICELOG("ch_all2_thread:%d\n",ch_all2->thread->id);
-				pt_ch2 = spdk_io_channel_get_ctx(ch_all2);
-				bdev_add_translate(pt_node->base_desc, pt_ch2->base_ch,bdev_io->u.nvme_passthru.buf, 
-						bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,back_complete, bdev_io);
-				bdev_add_translate(pt_node->base_desc, pt_ch2->base_ch,bdev_io->u.nvme_passthru.buf, 
-						bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,back_complete, bdev_io);
-			}*/
-		}
-		else if(bdev_io->u.nvme_passthru.cmd.opc==0xA0){
-			printf("A0_opcode:%u,key(cdw10):%u,num_block(cdw12):%u\n",bdev_io->u.nvme_passthru.cmd.opc,bdev_io->u.nvme_passthru.cmd.cdw10,bdev_io->u.nvme_passthru.cmd.cdw12);
-			
-			bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,
-				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,write_complete2, bdev_io);
 		}
 		else if(bdev_io->u.nvme_passthru.cmd.opc==0xC1){
-			
-			//SPDK_NOTICELOG("C1___passthru_ch:%d\n",ch->thread->id);
+			//spdk_bdev_write(pt_node->base_desc, pt_ch->base_ch, bdev_io->u.nvme_passthru.buf,
+			//			bdev_io->u.nvme_passthru.cmd.cdw10%*512, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
 			bdev_add_translate(pt_node->base_desc, pt_ch->base_ch,
 				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw10, bdev_io->u.nvme_passthru.cmd.cdw12*512,_pt_complete_io, bdev_io);
-			
-			/*	
-			if(ch_all3 !=NULL && ch_all3->thread->id >0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1){
-
-					SPDK_NOTICELOG("D3___passthru_ch:%d\n",ch_all3->thread->id);
-					pt_ch2 = spdk_io_channel_get_ctx(ch_all3);
-					spdk_thread_send_msg(ch_all3->thread, passthru_submit_request, bdev_io);
-			}
-			else if(ch_all2 !=NULL && ch_all2->thread->id >0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1){
-					
-					SPDK_NOTICELOG("D2___passthru_ch:%d\n",ch_all2->thread->id);
-					pt_ch2 = spdk_io_channel_get_ctx(ch_all2);
-
-					spdk_thread_send_msg(ch_all2->thread, passthru_submit_request, bdev_io);
-			}*/
 		}
 		break;
 	default:
@@ -749,7 +532,6 @@ vbdev_passthru_get_io_channel(void *ctx)
 	 * our channel create callback to populate any elements that we need to
 	 * update.
 	 */
-	//printf("vbdev_passthru_get_io_channel.*************************************************************************\n");
 	pt_ch = spdk_get_io_channel(pt_node);
 
 	return pt_ch;

@@ -52,6 +52,40 @@
 #include "spdk/log.h"
 
 FILE *pFILE = NULL;
+FILE *aFILE = NULL;
+int timeco = 0;
+char from_txt[300];
+
+int art[6];
+int flow2[6];
+int flow22[6];
+int trtr;
+int sec22;
+
+char delim[] = ",";
+char *Result;
+char *pars[10][20];
+int coreutil[10];
+int gcheck=0;
+int High_core[20];
+int hc = 0;
+int low_c=0;
+int cccount;
+
+int f1max;
+int f1max2;
+int f1;
+int f2;
+int g_tot;
+
+struct spdk_thread *tthh = NULL;
+struct spdk_thread *lth1 = NULL;
+struct spdk_thread *lth2 = NULL;
+struct spdk_thread *lth3 = NULL;
+struct spdk_thread *lth4 = NULL;
+struct spdk_thread *lth5 = NULL;
+struct spdk_thread *lth6 = NULL;
+
 int filefile = 0;
 struct spdk_io_channel *ch1=NULL;
 struct spdk_io_channel *ch2=NULL;
@@ -77,30 +111,13 @@ struct spdk_thread *th9 = NULL;
 struct spdk_thread *th10 = NULL;
 struct spdk_thread *th11 = NULL;
 
-struct spdk_io_channel *nc1 = NULL;
-struct spdk_io_channel *nc2 = NULL;
-struct spdk_io_channel *nc3 = NULL;
-struct spdk_io_channel *nc4 = NULL;
-struct spdk_io_channel *nc5 = NULL;
-struct spdk_io_channel *ncc1 = NULL;
-struct spdk_io_channel *ncc2 = NULL;
 
-struct spdk_thread *be1 = NULL;
-struct spdk_thread *be2 = NULL;
-struct spdk_thread *be3 = NULL;
-struct spdk_thread *be4 = NULL;
-struct spdk_thread *be5 = NULL;
-struct spdk_thread *be6 = NULL;
-struct spdk_thread *be7 = NULL;
-struct spdk_thread *be8 = NULL;
-struct spdk_thread *be9 = NULL;
-
-int nnn = 0;
-int ga = 0;
 int ggd = 1;
 int tot = 0;
 int zeone = 0;
 int zeone1 = 0;
+int zeone2 = 0;
+int sstart=0;
 struct spdk_io_channel *ch_all=NULL;
 struct spdk_io_channel *ch_all1=NULL;
 struct spdk_io_channel *ch_all2=NULL;
@@ -115,35 +132,11 @@ struct spdk_io_channel *ch_all10=NULL;
 
 struct spdk_io_channel *ch_b = NULL;
 
-struct spdk_io_channel *f_ch=NULL;
-struct spdk_io_channel *n_ch=NULL;
-
-int g_cnt = 0;
-int g_cnt1 = 0;
-int g_cnt2 = 0;
-int g_cnt3 = 0;
-int g_cnt4 = 0;
-int g_cnt5 = 0;
-int g_cnt6 = 0;
-int g_cnt7 = 0;
-int g_cnt8 = 0;
-int g_cnt9 = 0;
-int g_cnt10 = 0;
-int g_1 = 0;
-
-int ttt = 0;
-	
-
 char *buff;
 int buc = 0;
 int sec = 0;
 
-int co1=0;
-int co2=0;
-int co3=0;
-int co4=0;
 int four00 = 0;
-
 
 struct spdk_bdev_desc *bdev_desc;
 char *buff;
@@ -404,66 +397,8 @@ _pt_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 	/* Complete the original IO and then free the one that we created here
 	 * as a result of issuing an IO via submit_request.
 	 */
-	if(ggd % 10000 == 0){
-		//SPDK_NOTICELOG("%d\n",ggd);
-	}
-	ggd++;
-	
-	time_t tntt;
-	struct tm *lltt;
-	struct timeval ttvv;
-	tntt = gettimeofday(&ttvv, NULL);
-	lltt = localtime(&ttvv.tv_sec);
-
-	//bdev_io->u.nvme_passthru.cdw10 = llt->tm_sec;
-	
-	if(orig_io->u.nvme_passthru.cmd.opc == 0xC1){
-		int timee = 0;
-		timee = ttvv.tv_usec - orig_io->u.nvme_passthru.cmd.cdw10;
-	//	SPDK_NOTICELOG("%d-%d = %d\n",ttvv.tv_usec,orig_io->u.nvme_passthru.cmd.cdw10, timee);
-		if (timee > 0){
-			//SPDK_NOTICELOG("1\n");
-		switch(thread_now->id){
-		case 2:
-			//if(++co1 == 200){
-			if(++four00 < 300){
-				co1 = 0;
-				fprintf(pFILE,"%d, %d\n",timee, thread_now->id);
-			}
-			break;
-		case 3:
-			if(++four00 < 300){
-			//if(++co2 == 200){
-				co2 = 0;
-				fprintf(pFILE,"%d, %d\n",timee, thread_now->id);
-			}
-			break;
-		case 4:
-			if(++four00 < 300){
-			//if(++co3 == 200){
-				co3 = 0;
-				fprintf(pFILE,"%d, %d\n",timee, thread_now->id);
-			}
-			break;
-		case 5:
-			if(++four00 < 300){
-			//if(++co4 == 200){
-				co4 = 0;
-				fprintf(pFILE,"%d, %d\n",timee, thread_now->id);
-			}
-			break;
-			//fprintf(pFILE,"%d, %d\n",timee,thread_now->id);
-		}
-		}
-	}
 	spdk_bdev_io_complete(orig_io, status);
 	spdk_bdev_free_io(bdev_io);
-	//SPDK_NOTICELOG("D1. rout back thread:%d\n",thread_now->id);
-	//SPDK_NOTICELOG("thread_pt_complete_io:%d\n",thread_now->id);
-	//msg_queue_run_batch(thread_now,1);
-	//msg_queue_run_batch(thread_now,1);
-
-	//SPDK_NOTICELOG("C1. rout complete opc:0x%x\n",orig_io->u.nvme_passthru.cmd.opc);
 }
 
 static void
@@ -472,15 +407,8 @@ _c_io(void *ctx)
 	struct spdk_bdev_io *orig_io = ctx;
 	struct spdk_thread *thread = spdk_get_thread();
 
-	if(ggd % 10000 == 0){
-	//	SPDK_NOTICELOG("%d\n",ggd);
-	}
-	ggd++;
-	//SPDK_NOTICELOG("_c_io-thread:%d\n",thread->id);
 	spdk_bdev_io_complete(orig_io, orig_io->internal.status);
 }
-
-
 
 static void
 _back_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
@@ -493,31 +421,13 @@ _back_complete_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 		
 	if(orig_io->internal.ch != bdev_io->internal.ch){
 		struct spdk_thread *thread_b = spdk_bdev_io_get_thread(orig_io);
-		//SPDK_NOTICELOG("2. in back complete_thread_now :%d -> thread %d\n",thread_now->id,thread_b->id);
-		
-		//SPDK_NOTICELOG("fin now thread:%d\n",thread_now->id);
 		orig_io->internal.status = status;
-		//spdk_bdev_io_complete(orig_io, status);
 		spdk_bdev_free_io(bdev_io);
 		spdk_thread_send_msg(thread_b,_c_io, orig_io);
 	}
-	/*
-	struct spdk_bdev_channel *bdev_ch = bdev_io->internal.ch;
-	struct spdk_io_channel *ch = bdev_ch->channel;*/
-	/*
-	if (io_ctx->test != 0x5a) {
-		SPDK_NOTICELOG("HI!: Error, original IO device_ctx is wrong! 0x%x\n",
-				    io_ctx->test);
-	}*/
 	else{
-		//SPDK_NOTICELOG("D1. rout back thread:%d\n",thread_now->id);
-
-	
-	//spdk_bdev_free_io(orig_io); // will diff thread free bdev_io that allocated by othr thrd??? do not know
-	//SPDK_NOTICELOG("2. rout back thread:%d\n",thread_now->id);
 		spdk_bdev_free_io(bdev_io);
 	}
-	//free(orig_io);
 }
 
 static void
@@ -526,9 +436,9 @@ _back_io(struct spdk_bdev_io *bdev_io, bool success, void *cb_arg)
 	char* buff = cb_arg;
 	struct spdk_thread *thread = spdk_get_thread();
 	//SPDK_NOTICELOG("1. _back_io:%d\n",thread->id);
-	if(ggd % 10000 == 0){
-		SPDK_NOTICELOG("%d\n",ggd);
-	}
+	/*if(ggd % 10000 == 0){
+		//SPDK_NOTICELOG("%d\n",ggd);
+	}*/
 	ggd++;
 	spdk_bdev_free_io(bdev_io);
 }
@@ -628,6 +538,9 @@ pt_read_get_buf_cb(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_io, boo
 		}
 	}
 }
+
+
+
 static void
 rout_submit_request(void *ctx){
 	struct spdk_bdev_io *bdev_io = ctx;
@@ -666,28 +579,19 @@ rout_submit_request(void *ctx){
 			ch = ch10;
 			break;
 	}
-	/*
-	if(ch_all->thread->id == thread->id){
-		ch = ch_all;
-	}
-	else if(ch_all2->thread->id == thread->id){
-		ch = ch_all2;
-	}
-	else if(ch_all3->thread->id == thread->id){
-		ch = ch_all3;
-	}*/
 	struct pt_io_channel *pt_ch = spdk_io_channel_get_ctx(ch);
 	struct spdk_bdev_channel *channel = spdk_io_channel_get_ctx(ch);	
 
-	//SPDK_NOTICELOG("rout_sub:%d\n",ch->thread->id);
-	
-	//bdev_io->internal.ch = channel;
-	//struct rout_bdev_io *io_ctx2 = (struct rout_bdev_io *)bdev_io->driver_ctx;
-	//io_ctx2->test = 0x5a;
 	spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
 		bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _back_complete_io, bdev_io);
 }
+static void
+rout_submit_request_19(void *ctx){
 
+	struct spdk_bdev_io * bdev_io = ctx;
+	struct spdk_thread *thread = spdk_get_thread();	
+	spdk_thread_send_msg(thread,rout_submit_request,bdev_io);
+}
 static void
 rout_submit_request2(int ctx){
 	
@@ -729,21 +633,9 @@ rout_submit_request2(int ctx){
 			ch = ch10;
 			break;
 	}
-	/*
-	if(ch_all->thread->id == thread->id){
-		ch = ch_all;
-	}
-	else if(ch_all2->thread->id == thread->id){
-		ch = ch_all2;
-	}
-	else if(ch_all3->thread->id == thread->id){
-		ch = ch_all3;
-	}*/
-	//SPDK_NOTICELOG("thread:%d\n",ch->thread->id);
 	struct pt_io_channel *pt_ch = spdk_io_channel_get_ctx(ch);
 	struct spdk_bdev_channel *channel = spdk_io_channel_get_ctx(ch);	
 
-//	SPDK_NOTICELOG("rout_sub2\n");
 	uint32_t blk_size, buf_align;
 	blk_size = 512;
 	if(buc == 0){
@@ -769,6 +661,7 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 	struct rout_bdev_io *io_ctx = (struct rout_bdev_io *)bdev_io->driver_ctx;
 	struct spdk_bdev_io *bdev_io_D;
 	int rc = 0;
+	
 
 	io_ctx->test = 0x5a;
 	io_ctx->ch = ch;
@@ -776,25 +669,110 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 	time_t t;
 	struct tm *lt;
 	struct timeval tv;
+	
 
-	if (filefile == 0){
-		filefile = 1;
-		pFILE = fopen("log2.txt","w");
+	/* Read */
+	if (timeco > 20 && gcheck++ == 0){
+		
+		t = gettimeofday(&tv, NULL);
+		lt = localtime(&tv.tv_sec);
+		hc=0;
+		int ddd=0;
+		aFILE = fopen("../spdk/all2.txt","r");
+		fgets(from_txt,100,aFILE);
+		SPDK_NOTICELOG("\n\n%s\n\n",from_txt);
+		Result = strtok(from_txt,delim);
+		while ( Result != NULL){
+			strcpy(pars[ddd++],Result);
+			Result = strtok(NULL,delim);
+		}
+		for( ddd=0;ddd<6;ddd++){
+			High_core[ddd] = 0;
+			coreutil[ddd+1] = atoi(pars[ddd]);
+			if(coreutil[ddd+1] > 500000){
+				High_core[hc] = ddd+1;
+				if((ddd+1) == 1)
+					High_core[hc] = 7;
+				hc++;
+			}
+		}
+		coreutil[7] = coreutil[1];
+		int low11 = 1000000; 
+		int low22 = 1000000;  
+		int low33 = 1000000;
+		int low44 = 1000000;
+		int low55 = 1000000;
+		int low66 = 1000000;
+		for(int li=2;li<8;li++){
+				switch(li){
+					case 2:
+						tthh = th2;
+						break;
+					case 3:
+						tthh = th3;
+						break;
+					case 4:
+						tthh = th4;
+						break;
+					case 5:
+						tthh = th5;
+						break;
+					case 6:
+						tthh = th6;
+						break;
+					case 7:
+						tthh = th7;
+						break;
+					case 8:
+						tthh = th8;
+						break;
+					case 9:
+						tthh = th9;
+						break;
+				}	
+			if(High_core[0] != li && High_core[1] != li){
+				lth4 = tthh;
+				if(coreutil[li] < low33){
+					low44 = low33;
+					lth4 = lth3;
+					low33 = coreutil[li];
+					lth3 = tthh;
+					if(low33 < low22){
+						low33 = low22;
+						lth3 = lth2;
+						low22 = coreutil[li];
+						lth2 = tthh;
+						if(low22 < low11){
+							low22 = low11;
+							lth2 = lth1;
+							low11 = coreutil[li];
+							lth1 = tthh;
+						}
+					}
+				}
+
+			}
+		}
+		
+		fclose(aFILE);
+		gcheck=0;
+		sstart = 1;
 	}
+
 	
 	/* Setup a per IO context value; we don't do anything with it in the vbdev other
 	 * than confirm we get the same thing back in the completion callback just to
 	 * demonstrate.
 	 */
+
 	
 	bdev_desc = pt_node->base_desc;
-	/* for background I/O 여기 해제해야*/
+	if(th2==NULL || th3==NULL || th4==NULL || th5==NULL || th6==NULL || th7==NULL){
 	switch (ch->thread->id){
 		case 1:
 			if(th1 == NULL){
 				th1 = ch->thread;
 				ch1 = ch;
-				SPDK_NOTICELOG("th1:%d\n",th1->id);
 			}
 			break;
 		case 2:
@@ -802,7 +780,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				th2 = ch->thread;
 				ch2 = ch;
 				ch_b = ch;
-				SPDK_NOTICELOG("2222:th2:%d,ch_b:%d\n",th2->id,ch_b->thread->id);
 			}
 			break;
 		case 3:
@@ -814,7 +791,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;
-				SPDK_NOTICELOG("3333:th3:%d,ch_b:%d\n",th3->id,ch_b->thread->id);
 			}
 			break;
 		case 4:
@@ -826,7 +802,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;
-				SPDK_NOTICELOG("4444:th4:%d,ch_b:%d\n",th4->id,ch_b->thread->id);
 			}
 			break;
 		case 5:
@@ -838,7 +813,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;
-				SPDK_NOTICELOG("5555:th5:%d,ch_b:%d\n",th5->id,ch_b->thread->id);
 			}
 			break;
 		case 6:
@@ -850,7 +824,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;
-				SPDK_NOTICELOG("6666:th6:%d,ch_b:%d\n",th6->id,ch_b->thread->id);
 			}
 			break;
 		case 7:
@@ -862,44 +835,6 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;
-				SPDK_NOTICELOG("7777:th7:%d,ch_b:%d\n",th7->id,ch_b->thread->id);
-			}
-			break;
-		case 8:
-			if(th8 == NULL){
-				th8 = ch->thread;
-				ch8 = ch;
-				if(ch_b == NULL){
-					ch_b = ch;
-				}
-				else if(ch_b->thread->id > ch->thread->id)
-					ch_b = ch;
-				SPDK_NOTICELOG("8888:th8:%d,ch_b:%d\n",th8->id,ch_b->thread->id);
-			}
-			break;
-		case 9:
-			if(th9 == NULL){
-				th9 = ch->thread;
-				ch9 = ch;
-				if(ch_b == NULL){
-					ch_b = ch;
-				}
-				else if(ch_b->thread->id > ch->thread->id)
-					ch_b = ch;
-				SPDK_NOTICELOG("9999:th9:%d,ch_b:%d\n",th9->id,ch_b->thread->id);
-			}
-			break;
-		case 10:
-			if(th10 == NULL){
-				th10 = ch->thread;
-				ch10 = ch;
-				if(ch_b == NULL){
-					ch_b = ch;
-				}
-				else if(ch_b->thread->id > ch->thread->id)
-					ch_b = ch;
-
-				SPDK_NOTICELOG("101010:th10:%d,ch_b:%d\n",th10->id,ch_b->thread->id);
 			}
 			break;
 		default:
@@ -911,19 +846,16 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 				}
 				else if(ch_b->thread->id > ch->thread->id)
 					ch_b = ch;				
-				SPDK_NOTICELOG("111111:else th11:%d,ch_b:%d\n",th11->id,ch_b->thread->id);
 			}
 			break;
 	}
-	/*
-	if(ch_b != NULL){
-		SPDK_NOTICELOG("ch_b:%d\n",ch_b->thread->id);
-	}*/
+	}
 
 	switch (bdev_io->type) {
 	case SPDK_BDEV_IO_TYPE_READ:
 		spdk_bdev_io_get_buf(bdev_io, pt_read_get_buf_cb,
 				     bdev_io->u.bdev.num_blocks * bdev_io->bdev->blocklen);
+
 		break;
 	case SPDK_BDEV_IO_TYPE_WRITE:
 		if (bdev_io->u.bdev.md_buf == NULL) {
@@ -974,1088 +906,71 @@ vbdev_rout_submit_request(struct spdk_io_channel *ch, struct spdk_bdev_io *bdev_
 		break;
 	case SPDK_BDEV_IO_TYPE_NVME_IO:
 		if(bdev_io->u.nvme_passthru.cmd.opc==0xC2){
-			SPDK_NOTICELOG("in rout\n");
-			break;
+			int pone = zeone1;
+			if(High_core[0] == ch->thread->id || High_core[1] == ch->thread->id){
+				if(th2 != NULL && th3 != NULL && th4 != NULL && th5 != NULL && th6 != NULL && th7 != NULL && timeco >= 100 && lth1 != NULL && lth2 != NULL && lth3 != NULL && lth4 != NULL){
+					switch(pone){	
+						case 0:
+						spdk_thread_send_msg(lth1,rout_submit_request,bdev_io);
+						zeone1=1;
+						break;
+						case 1:
+						spdk_thread_send_msg(lth2,rout_submit_request,bdev_io);
+						zeone1=2;
+						break;	
+						case 2:
+						spdk_thread_send_msg(lth3,rout_submit_request,bdev_io);
+						zeone1=3;
+						break;
+						case 3:
+						spdk_thread_send_msg(lth4,rout_submit_request,bdev_io);
+						zeone1=0;
+						break;
+					}	
+				}
+				else{
+					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
+						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
+				}
+			}
+			else{
+					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
+						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
+			}
 		}
 		if(bdev_io->u.nvme_passthru.cmd.opc==0xC1){
-			//fputs(,pFILE);
-			//tot++;
-			//SPDK_NOTICELOG("sta\n");
-				
-			time_t tnt;
-			struct tm *llt;
-			struct timeval ttv;
-			tnt = gettimeofday(&ttv, NULL);
-			llt = localtime(&ttv.tv_sec);
-			if (llt->tm_sec - sec >= 1){
-				sec = llt->tm_sec;
-				four00 = 0;
-				if(sec == 60){
-					sec = 0;
-				}
-				fprintf(pFILE,"\n\n");
-			}
-			//SPDK_NOTICELOG("time:%02d.%06d\n",llt->tm_sec, ttv.tv_usec);
-			bdev_io->u.nvme_passthru.cmd.cdw10 = ttv.tv_usec;
-			//SPDK_NOTICELOG(":%06d\n",bdev_io->u.nvme_passthru.cmd.cdw10);
-	//printf("sta : %06d\n",tv.tv_usec);
-	//printf("sta시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
-	//		lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-	//		lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);
-
-			int te = 0;
-			/* for background I/O 지금 어떤 thread인지 기록 여기 해제해야함.
-
-			if(ga == 0){
-				nc1 = ch;
-				nc2 = ch;
-				nc3 = ch;
-				nc4 = ch;
-				nc5 = ch;
-				be1 = ch->thread;
-				be2 = ch->thread;
-				be3 = ch->thread;
-				be4 = ch->thread;
-				be5 = ch->thread;
-				ga = 1;
-			}I/ 
-			//SPDK_NOTICELOG("1. nc1:%d,nc2:%d,nc3:%d,ch:%d\n",nc1->thread->id, nc2->thread->id, nc3->thread->id,ch->thread->id);
-
-			for background I/O 2번 해제할거*여기도 해제해야
-			if(ch->thread->id != nc1->thread->id && ch->thread->id != nc2->thread->id && ch->thread->id != nc3->thread->id){
-					//&& nc4->thread->id != ch->thread->id){
-			if(nnn % 3 == 0 ){
-				nnn++;
-					nc1 = ch;
-			}
-			else if(nnn %3 == 1){
-				nnn++;
-					nc2 = ch;
-			}
-			else{
-				nnn++;
-					nc3 = ch;
-			}
-			}*/
-			
-			/*for background 여기 해제해야함
-			nc5 = nc4;
-			nc4 = nc3;
-			nc3 = nc2;
-			nc2 = nc1;
-			nc1 = ch;*/
-			//t = gettimeofday(&tv, NULL);
-
-			//lt = localtime(&tv.tv_sec);
-			//printf("fin : %06d\n",tv.tv_usec);
-
-			//SPDK_NOTICELOG("fin\n");
-			//printf("fin시간 : %04d-%02d-%02d %02d:%02d:%02d.%06d\n",
-			//lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
-			//lt->tm_hour, lt->tm_min, lt->tm_sec, tv.tv_usec);
-			/*사용중인 쓰레드 두개 중 하나가 바뀌었으면 변경 요청 
-			if(ch->thread->id != nc1->thread->id && ch->thread->id != nc2->thread->id){
-				if(nnn % 2 == 0){
-					nnn++;
-					nc1 = ch;
-				}
-				else{
-					nnn++;
-					nc2 = ch;
-				}
-			}*/
-			/* thread 1개일 때 
-			if(ch->thread->id != nc1->thread->id){
-				nc1 = ch;
-			}*/
-
-			
-			//SPDK_NOTICELOG("2. nc1:%d,nc2:%d,nc3:%d,ch:%d\n",nc1->thread->id, nc2->thread->id, nc3->thread->id,ch->thread->id);
-
-			if(nnn > 30001){
-				nnn = 0;
-			}
-			/*	
-			if(ch2 != NULL){
-				//SPDK_NOTICELOG("ch2:%d\n",ch->thread->id);
-				ch_b = ch2;
-			}
-			else if(ch3 != NULL){
-				ch_b = ch3;
-				//SPDK_NOTICELOG("ch2:%d,ch_b:%d\n",ch->thread->id,ch_b->thread->id);
-			}
-			else if(ch4 != NULL){
-				ch_b = ch4;
-			}
-			else if(ch5 != NULL){
-				ch_b = ch5;
-			}
-			else if(ch6 != NULL){
-				ch_b = ch6;
-			}
-			else{
-				ch_b = ch;
-			}*/
-			/***************************** 백그라운드용 반드시 여기 해제하기**/
-			/*****background I/O
-				
-			
-			switch(ch_b->thread->id){
-				case 2:
-					//if(th2 != NULL){
-					//if(th2 != NULL && be1 != th2 && be2 != th2){
-					//if(th2 != NULL && be1 != th2 && be2 != th2 && be3 != th2 && be4 != th2){
-					if(th2 != NULL && be1 != th2){
-						//if(nc1->thread->id != th2->id){ 
-						//if(nc1->thread->id != th2->id && nc2->thread->id != th2->id){ 
-						//if(nc1->thread->id != th2->id && nc2->thread->id != th2->id && nc3->thread->id != th2->id){ 
-						if(nc1->thread->id != th2->id && nc2->thread->id != th2->id && nc3->thread->id != th2->id && nc4->thread->id != th2->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th2;
-						spdk_thread_send_msg(th2,rout_submit_request2, th2->id);
-						break;
-						}
-					}
-				case 3:
-					//if(th3 != NULL){
-					if(th3 != NULL && be1 != th3){
-					//if(th3 != NULL && be1 != th3 && be2 != th3){
-					//if(th3 != NULL && be1 != th3 && be2 != th3 && be3 != th3 && be4 != th3){
-						//if(nc1->thread->id != th3->id){ 
-						//if(nc1->thread->id != th3->id && nc2->thread->id != th3->id){ 
-						//if(nc1->thread->id != th3->id && nc2->thread->id != th3->id && nc3->thread->id != th3->id){ 
-						if(nc1->thread->id != th3->id && nc2->thread->id != th3->id && nc3->thread->id != th3->id && nc4->thread->id != th3->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th3;
-						spdk_thread_send_msg(th3,rout_submit_request2, th3->id);
-						break;
-						}
-					}
-				case 4:
-					//if(th4 != NULL){
-					if(th4 != NULL && be1 != th4){
-					//if(th4 != NULL && be1 != th4 && be2 != th4){
-					//if(th4 != NULL && be1 != th4 && be2 != th4 && be3 != th4 && be4 != th4){
-						//if(nc1->thread->id != th4->id){ 
-						//if(nc1->thread->id != th4->id && nc2->thread->id != th4->id){ 
-						//if(nc1->thread->id != th4->id && nc2->thread->id != th4->id && nc3->thread->id != th4->id){ 
-						if(nc1->thread->id != th4->id && nc2->thread->id != th4->id && nc3->thread->id != th4->id && nc4->thread->id != th4->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th4;
-						spdk_thread_send_msg(th4,rout_submit_request2, th4->id);
-						break;
-						}
-					}
-				case 5:
-					//if(th5 != NULL){
-					if(th5 != NULL && be1 != th5){
-					//if(th5 != NULL && be1 != th5 && be2 != th5){
-					//if(th5 != NULL && be1 != th5 && be2 != th5 && be3 != th5 && be4 != th5){
-						//if(nc1->thread->id != th5->id){ 
-						//if(nc1->thread->id != th5->id && nc2->thread->id != th5->id){ 
-						//if(nc1->thread->id != th5->id && nc2->thread->id != th5->id && nc3->thread->id != th5->id){ 
-						if(nc1->thread->id != th5->id && nc2->thread->id != th5->id && nc3->thread->id != th5->id && nc4->thread->id != th5->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th5;
-						spdk_thread_send_msg(th5,rout_submit_request2, th5->id);
-						break;
-						}
-					}
-				case 6:
-					//if(th6 != NULL){
-					if(th6 != NULL && be1 != th6){
-					//if(th6 != NULL && be1 != th6 && be2 != th6){
-					//if(th6 != NULL && be1 != th6 && be2 != th6 && be3 != th6 && be4 != th6){
-						//if(nc1->thread->id != th6->id){ 
-						//if(nc1->thread->id != th6->id && nc2->thread->id != th6->id){ 
-						//if(nc1->thread->id != th6->id && nc2->thread->id != th6->id && nc3->thread->id != th6->id){ 
-						if(nc1->thread->id != th6->id && nc2->thread->id != th6->id && nc3->thread->id != th6->id && nc4->thread->id != th6->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th6;
-						spdk_thread_send_msg(th6,rout_submit_request2, th6->id);
-						break;
-						}
-					}
-				case 7:
-					//if(th7 != NULL){
-					if(th7 != NULL && be1 != th7){
-					//if(th7 != NULL && be1 != th7 && be2 != th7){
-					//if(th7 != NULL && be1 != th7 && be2 != th7 && be3 != th7 && be4 != th7){
-						//if(nc1->thread->id != th7->id){ 
-						//if(nc1->thread->id != th7->id && nc2->thread->id != th7->id){ 
-						//if(nc1->thread->id != th7->id && nc2->thread->id != th7->id && nc3->thread->id != th7->id){ 
-						if(nc1->thread->id != th7->id && nc2->thread->id != th7->id && nc3->thread->id != th7->id && nc4->thread->id != th7->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th7;
-						spdk_thread_send_msg(th7,rout_submit_request2, th7->id);
-						break;
-						}
-					}
-				case 8:
-					//if(th8 != NULL){
-					if(th8 != NULL && be1 != th8){
-					//if(th8 != NULL && be1 != th8 && be2 != th8){
-					//if(th8 != NULL && be1 != th8 && be2 != th8 && be3 != th8 && be4 != th8){
-						//if(nc1->thread->id != th8->id){ 
-						//if(nc1->thread->id != th8->id && nc2->thread->id != th8->id){ 
-						//if(nc1->thread->id != th8->id && nc2->thread->id != th8->id && nc3->thread->id != th8->id){ 
-						if(nc1->thread->id != th8->id && nc2->thread->id != th8->id && nc3->thread->id != th8->id && nc4->thread->id != th8->id){ 
-						//be4 = be3;
-						//be3 = be2;
-						//be2 = be1;
-						be1 = th8;
-						spdk_thread_send_msg(th8,rout_submit_request2, th8->id);
-						break;
-						}
-					}
-				case 9:
-					//if(th9 != NULL){
-					if(th9 != NULL && be1 != th9){
-					//if(th9 != NULL && be1 != th9 && be2 != th9){
-					//if(th9 != NULL && be1 != th9 && be2 != th9 && be3 != th9 && be4 != th9){
-						//if(nc1->thread->id != th9->id){ 
-						//if(nc1->thread->id != th9->id && nc2->thread->id != th9->id){ 
-						//if(nc1->thread->id != th9->id && nc2->thread->id != th9->id && nc3->thread->id != th9->id){ 
-						if(nc1->thread->id != th9->id && nc2->thread->id != th9->id && nc3->thread->id != th9->id && nc4->thread->id != th9->id){ 
-					//	be4 = be3;
-					//	be3 = be2;
-					//	be2 = be1;
-						be1 = th9;
-						spdk_thread_send_msg(th9,rout_submit_request2, th9->id);
-						break;
-						}
-					}
-				case 10:
-					//if(th10 != NULL){
-					if(th10 != NULL && be1 != th10){
-					//if(th10 != NULL && be1 != th10 && be2 != th10){
-				//	if(th10 != NULL && be1 != th10 && be2 != th10 && be3 != th10 && be4 != th10){
-						if(nc1->thread->id != th10->id && nc2->thread->id != th10->id && nc3->thread->id != th10->id && nc4->thread->id != th10->id){ 
-					//	be4 = be3;
-					//	be3 = be2;
-					//	be2 = be1;
-						be1 = th10;
-						spdk_thread_send_msg(th10,rout_submit_request2, th10->id);
-						break;
-						}
-					}
-			}*/
-			/*
-			switch(ch_b->thread->id){
-				case 2:
-					//SPDK_NOTICELOG("case 2\n");
-					if(th2 != NULL && be1 != th2 && be2 != th2 && be3 != th2 ){
-							//&& be4 != th2){
-							//&& be5 != th2){
-						if(nc1->thread->id != th2->id && nc2->thread->id != th2->id && nc3->thread->id != th2->id){ 
-								//&& nc4->thread->id != th2->id){
-						//SPDK_NOTICELOG("1. back2_send:%d->%d __ size:%d\n",ch->thread->id, th2->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						//ch_b = th2;
-				//		be5 = be4;
-				//		be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th2;
-						spdk_thread_send_msg(th2, rout_submit_request2, th2->id);
-						break;
-						}
-					}
-				case 3:
-					//SPDK_NOTICELOG("case 3\n");
-					if(th3 != NULL && be1 != th3 && be2 != th3 && be3 != th3 ){
-							//&& be4 != th3){
-							//&& be5 != th3){
-						if(nc1->thread->id != th3->id && nc2->thread->id != th3->id && nc3->thread->id != th3->id){
-								//&& nc4->thread->id != th3->id){
-						//SPDK_NOTICELOG("1. back3_send:%d->%d __ size:%d\n",ch->thread->id, th3->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						//ch_b = th3;
-					//	be5 = be4;
-					//	be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th3;
-						spdk_thread_send_msg(th3, rout_submit_request2, th3->id);
-						break;
-						}
-					}
-				case 4:
-					//SPDK_NOTICELOG("case 4\n");
-					if(th4 != NULL && be1 != th4 && be2 != th4 && be3 != th4){
-							//&& be4 != th4){
-					  //&& be5 != th4){
-						if(nc1->thread->id != th4->id && nc2->thread->id != th4->id && nc3->thread->id != th4->id){ 
-								//&& nc4->thread->id != th4->id){
-						//SPDK_NOTICELOG("1. back4_send:%d->%d __ size:%d\n",ch->thread->id, th4->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						//ch_b = th4;
-					//	be5 = be4;
-					//	be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th4;
-						spdk_thread_send_msg(th4, rout_submit_request2, th4->id);
-						break;
-						}
-					}
-				case 5:
-				//	SPDK_NOTICELOG("case 5\n");
-					if(th5 != NULL && be1 != th5 && be2 != th5 && be3 != th5 ){
-							//&& be4 != th5){
-							//&& be5 != th5){
-						if(nc1->thread->id != th5->id && nc2->thread->id != th5->id && nc3->thread->id != th5->id){ 
-								//&& nc4->thread->id != th5->id){
-					//	SPDK_NOTICELOG("1. back5_send:%d->%d __ size:%d\n",ch->thread->id, th5->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-					//	ch_b = th5;
-					//	be5 = be4;
-					//	be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th5;
-						spdk_thread_send_msg(th5, rout_submit_request2, th5->id);
-						break;
-						}
-					}
-				case 6:
-				//	SPDK_NOTICELOG("case 6\n");
-					if(th6 != NULL && be1 != th6 && be2 != th6 && be3 != th6 ){
-							//&& be4 != th6){
-						//	&& be5 != th6){
-						if(nc1->thread->id != th6->id && nc2->thread->id != th6->id && nc3->thread->id != th6->id){ 
-								//&& nc4->thread->id != th6->id){
-				//		SPDK_NOTICELOG("1. back6_send:%d->%d __ size:%d\n",ch->thread->id, th6->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-					//	ch_b = th6;
-					//	be5 = be4;
-					//	be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th6;
-						spdk_thread_send_msg(th6, rout_submit_request2, th6->id);
-						break;
-						}
-					}
-				case 7:
-				//	SPDK_NOTICELOG("case 7\n");
-					if(th7 != NULL && be1 != th7 && be2 != th7 && be3 != th7 ){
-							//&& be4 != th7){
-						//	&& be5 != th7){
-						if(nc1->thread->id != th7->id && nc2->thread->id != th7->id && nc3->thread->id != th7->id){
-								//&& nc4->thread->id != th7->id){
-				///		SPDK_NOTICELOG("1. back7_send:%d->%d __ size:%d\n",ch->thread->id, th7->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-					//	ch_b = th7;
-					//	be5 = be4;
-					//	be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th7;
-						spdk_thread_send_msg(th7, rout_submit_request2, th7->id);
-						break;
-						}
-					}
-				case 8:
-				//	SPDK_NOTICELOG("case 8\n");
-					if(th8 != NULL && be1 != th8 && be2 != th8 && be3 != th8 && be4 != th8){
-						//	&& be5 != th8){
-						if(nc1->thread->id != th8->id && nc2->thread->id != th8->id && nc3->thread->id != th8->id && nc4->thread->id != th8->id){
-				//		SPDK_NOTICELOG("1. back8_send:%d->%d __ size:%d\n",ch->thread->id, th8->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-					//	ch_b = th8;
-					//	be5 = be4;
-						be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th8;
-						spdk_thread_send_msg(th8, rout_submit_request2, th8->id);
-						break;
-						}
-					}
-				case 9:
-				//	SPDK_NOTICELOG("case 9\n");
-					if(th9 != NULL && be1 != th9 && be2 != th9 && be3 != th9 ){
-							//&& be4 != th9 ){
-						//	&& be5 != th9){
-						if(nc1->thread->id != th9->id && nc2->thread->id != th9->id && nc3->thread->id != th9->id){
-							//&& nc4->thread->id != th9->id){
-					//	SPDK_NOTICELOG("1. back9_send:%d->%d __ size:%d\n",ch->thread->id, th9->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-				//		ch_b = th9;
-				//		be5 = be4;
-				//		be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th9;
-						spdk_thread_send_msg(th9, rout_submit_request2, th9->id);
-						break;
-						}
-					}
-				default:
-			//		SPDK_NOTICELOG("case 10\n");
-					if(th10 != NULL){
-			//		if(th10 != NULL && be1 != th10 && be2 != th10 && be3 != th10){
-							//&& be4 != th10){
-						//	&& be5 != th10 ){
-			//			if(nc1->thread->id != th10->id && nc2->thread->id != th10->id && nc3->thread->id != th10->id ){
-								//&& nc4->thread->id != th10->id){
-				//		SPDK_NOTICELOG("1. back10_send:%d->%d __ size:%d\n",ch->thread->id, th10->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-					//	ch_b = th10;
-				//		be5 = be4;
-				//		be4 = be3;
-						be3 = be2;
-						be2 = be1;
-						be1 = th10;
-						spdk_thread_send_msg(th10, rout_submit_request2, th10->id);
-						break;
-			//			}
-			//		}
-					}
-			}*/
-			/*******************/
-			/***********************************/
-			/*****foreground I/O*****/
-			struct spdk_thread *thread_now = spdk_get_thread();
-			//	SPDK_NOTICELOG("2. no move:thread:%d:size-%d\n",thread_now->id,bdev_io->u.nvme_passthru.cmd.cdw12);				
-			//가장 기본값은 여기 해제!!!!!!!!!!!!!
-				
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			/****background 같은 CPU에서 실행**/
-			/*********************
-			
-			uint32_t blk_size, buf_align;
-			blk_size = 512;
-			if(buc == 0){
-				buc++;
-				buff = spdk_dma_zmalloc(512,512,NULL);
-				snprintf(buff, blk_size, "%s", "Hello World\n");
-			}
-			spdk_bdev_nvme_io_passthru2(bdev_desc, pt_ch->base_ch, buff, 1024, _back_io, buff);
-			*/
-			//SPDK_NOTICELOG("now th_id:%d\n",ch->thread->id);
 			int pone = zeone1;
-
-			////////////////////
-			////////////////////
-			////////////////////
-			/*background I/O를 6, 7, 8에 몰아
-			if(th6 != NULL && th7 != NULL && th8 != NULL){
-			//if(th2 != NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id == 4  && pone == 0){
-			if(ch->thread->id == 6 || ch->thread->id == 7 || ch->thread->id == 8){
-			//	SPDK_NOTICELOG("thread:%d\n",ch->thread->id);
-			uint32_t blk_size, buf_align;
-			blk_size = 512;
-			if(buc == 0){
-				buc++;
-				buff = spdk_dma_zmalloc(512,512,NULL);
-				snprintf(buff, blk_size, "%s", "Hello World\n");
-			}
-			spdk_bdev_nvme_io_passthru2(bdev_desc, pt_ch->base_ch, buff, 1024, _back_io, buff);
-			}
-			else if(ch->thread->id != 6 && ch->thread->id != 7 && ch->thread->id != 8  && pone == 0){
-					//SPDK_NOTICELOG("p:%d, thread %d->send to th6\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th6, rout_submit_request2, th6->id);
-				zeone1=1;
-			}
-			//else if (th3 != NULL && ch->thread->id != 2 && ch->thread->id != 3 && ch->thread->id != 4 && pone == 1){
-			else if (ch->thread->id != 6 && ch->thread->id != 7 && ch->thread->id != 8 && pone == 1){
-					//SPDK_NOTICELOG("p:%d, thread %d->send to th7\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th7, rout_submit_request2, th7->id);
-				zeone1=2;
-			}
-			//else if (th4 !=NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			//else if (ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			else{
-
-					//SPDK_NOTICELOG("#### p:%d, thread %d->send to th8\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th8, rout_submit_request2, th8->id);
-					zeone1=0;
-			}
-			}
-
-			else{
-				SPDK_NOTICELOG("Bout_____p:%d,now th_id:%d\n",pone,ch->thread->id);
-				//spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-				//		bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-
-			}*/
-			
-			/* 4096은 여기서 처리 */
-			//if(ch->thread->id == 1|| ch->thread->id == 2 || ch->thread->id == 3){
-			//SPDK_NOTICELOG("%d\n",ch->thread->id);
-			//}
-			//SPDK_NOTICELOG("%d\n",bdev_io->u.nvme_passthru.cmd.cdw12);
-			
-			///////////////////1. 16384B 데이터를 th5에서 처리하는 방법////////////////////
-			/*		
-			if(bdev_io->u.nvme_passthru.cmd.cdw12 == 2){
-			
-			if(th6 != NULL){
-				if(ch->thread->id == 6){
-				//	SPDK_NOTICELOG("thread:%d\n",ch->thread->id);
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
+			if((High_core[0] == ch->thread->id || High_core[1] == ch->thread->id)){
+				if(th2 != NULL && th3 != NULL && th4 != NULL && th5 != NULL && th6 != NULL && sstart == 1 && lth1 != NULL && lth2 != NULL && lth3 != NULL && lth4 != NULL){
+					switch(pone){	
+						case 0:
+							spdk_thread_send_msg(lth1,rout_submit_request,bdev_io);
+							zeone1=1;
+							break;
+						case 1:
+							spdk_thread_send_msg(lth2,rout_submit_request,bdev_io);
+							zeone1=2;
+							break;
+						case 2:
+							spdk_thread_send_msg(lth3,rout_submit_request,bdev_io);
+							zeone1=3;
+							break;
+						case 3:
+							spdk_thread_send_msg(lth4,rout_submit_request,bdev_io);
+							zeone1=0;
+							break;	
+					}	
 				}
 				else{
-				//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					spdk_thread_send_msg(th6,rout_submit_request,bdev_io);
-				}
-			}
-			else{
-			//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					//spdk_thread_send_msg(th3,rout_submit_request,bdev_io);
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			}
-			else{
-				//SPDK_NOTICELOG("else\n");
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}*/
-			//////////////*********************************************///////////////////
-			
-
-			///////////////////2. 16384B 데이터를 th5,th6에서 처리하는 방법//////////////////// 
-			/*	
-			if(bdev_io->u.nvme_passthru.cmd.cdw12 == 3){
-			if(th3 != NULL && ch->thread->id == 3){
-			if(th5 != NULL && th6 != NULL){
-				if(ch->thread->id == 5 || ch->thread->id == 6){
-				//	SPDK_NOTICELOG("thread:%d\n",ch->thread->id);
 					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
 						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
 				}
-				else if(pone == 0){
-				//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					spdk_thread_send_msg(th5,rout_submit_request,bdev_io);
-					zeone1=1;
-				}
-				else{
-					spdk_thread_send_msg(th6,rout_submit_request,bdev_io);
-					zeone1=0;
-				}
-			
-			}
 			}
 			else{
-			//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					//spdk_thread_send_msg(th3,rout_submit_request,bdev_io);
 					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
 						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
 			}
-			}
-			else{
-				//SPDK_NOTICELOG("else\n");
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			*/	
-			//////////////*********************************************///////////////////
 			
-
-			///////////////////3. 16384B 데이터를 th2,th5,th6에서 처리하는 방법//////////////////// 
-			/*	
-			if(bdev_io->u.nvme_passthru.cmd.cdw12 == 3){
-			
-			if(th5 != NULL && th6 != NULL && th4 != NULL){
-				if(ch->thread->id == 5 || ch->thread->id == 6 || ch->thread->id == 4){
-				//	SPDK_NOTICELOG("thread:%d\n",ch->thread->id);
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-				}
-				else if(pone == 0){
-				//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					spdk_thread_send_msg(th4,rout_submit_request,bdev_io);
-					zeone1=1;
-				}
-				else if(pone == 1){
-					spdk_thread_send_msg(th5,rout_submit_request,bdev_io);
-					zeone1=2;
-				}
-				else{
-					spdk_thread_send_msg(th6,rout_submit_request,bdev_io);
-					zeone1=0;
-				}
-			}
-			else{
-			//	SPDK_NOTICELOG("thread:%d->7\n",ch->thread->id);
-					//spdk_thread_send_msg(th3,rout_submit_request,bdev_io);
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			}
-			else{
-				//SPDK_NOTICELOG("else\n");
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			*/
-			//////////////*********************************************///////////////////
-
-			//SPDK_NOTICELOG("3_____%d\n",bdev_io->u.nvme_passthru.cmd.cdw12);
-			//pone = zeone1;
-			//if(th6 != NULL && th7 != NULL && th8 != NULL){
-			/*
-			if(th7 != NULL && th8 != NULL){
-			//if(th2 != NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id == 4  && pone == 0){
-			//if(ch->thread->id == 6 || ch->thread->id == 7 || ch->thread->id == 8){
-			if(ch->thread->id == 7 || ch->thread->id == 8){
-			//	SPDK_NOTICELOG("0_thread:%d\n",ch->thread->id);
-				spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			else if(ch->thread->id != 7 && ch->thread->id != 8  && pone == 0){
-			//else if(ch->thread->id != 6 && ch->thread->id != 7 && ch->thread->id != 8  && pone == 0){
-			//		SPDK_NOTICELOG("0_p:%d, thread %d->send to th7\n",pone, ch->thread->id);
-					//spdk_thread_send_msg(th6,rout_submit_request,bdev_io);
-					spdk_thread_send_msg(th7,rout_submit_request,bdev_io);
-				zeone1=1;
-			}
-			//else if (th3 != NULL && ch->thread->id != 2 && ch->thread->id != 3 && ch->thread->id != 4 && pone == 1){
-			///else if (ch->thread->id != 6 && ch->thread->id != 7 && ch->thread->id != 8 && pone == 1){
-				//	SPDK_NOTICELOG("0_p:%d, thread %d->send to th7\n",pone, ch->thread->id);
-			///			spdk_thread_send_msg(th7, rout_submit_request,bdev_io);
-			///		zeone1=2;
-			///}
-			//else if (th4 !=NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			//else if (ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			else{
-
-				//	SPDK_NOTICELOG("0_#### p:%d, thread %d->send to th8\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th8, rout_submit_request,bdev_io);
-					zeone1=0;
-			}
-			}
-			else{
-				SPDK_NOTICELOG("0_out_____p:%d,now th_id:%d\n",pone,ch->thread->id);
-				spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-
-			}*/
-			/*
-			}
-			else{
-				//SPDK_NOTICELOG("else\n");
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}*/
-			
-			/*
-			else{
-
-			//SPDK_NOTICELOG("0_____%d\n",bdev_io->u.nvme_passthru.cmd.cdw12);
-
-			//여기해제 
-			pone = zeone;
-			//if(th5 != NULL && th3 != NULL && th4 != NULL){
-			if(th2 != NULL && th5 != NULL && th3 != NULL && th4 != NULL && th6 != NULL && th9 != NULL){
-			//if(th2 != NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id == 4  && pone == 0){
-			if(ch->thread->id == 2 || ch-> thread->id == 9 || ch->thread->id == 5 || ch->thread->id == 3 || ch->thread->id == 4 || ch->thread->id == 6){
-				//SPDK_NOTICELOG("0_1_thread:%d\n",ch->thread->id);
-				spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-				bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			else if(ch->thread->id != 2 && ch->thread->id != 9 && ch->thread->id != 3 && ch->thread->id != 5 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 0){
-				//	SPDK_NOTICELOG("5_p:%d, thread %d->send to th5\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th5,rout_submit_request,bdev_io);
-				zeone=1;
-			}
-			//else if (th3 != NULL && ch->thread->id != 2 && ch->thread->id != 3 && ch->thread->id != 4 && pone == 1){
-			else if(ch->thread->id != 2 && ch->thread->id != 9 && ch->thread->id != 3 && ch->thread->id != 5 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 1){
-			//else if (ch->thread->id != 5 && ch->thread->id != 3 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 1){
-				//	SPDK_NOTICELOG("3_p:%d, thread %d->send to th3\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th3, rout_submit_request,bdev_io);
-				zeone=2;
-			}
-			else if(ch->thread->id != 2 && ch->thread->id != 9 && ch->thread->id != 3 && ch->thread->id != 5 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 2){
-			//else if (ch->thread->id != 5 && ch->thread->id != 3 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 2){
-				//	SPDK_NOTICELOG("6_p:%d, thread %d->send to th6\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th6, rout_submit_request,bdev_io);
-				zeone=3;
-			}
-			else if(ch->thread->id != 2 && ch->thread->id != 9 && ch->thread->id != 3 && ch->thread->id != 5 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 3){
-			//else if (ch->thread->id != 5 && ch->thread->id != 3 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 2){
-				//	SPDK_NOTICELOG("2_p:%d, thread %d->send to th2\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th2, rout_submit_request,bdev_io);
-				zeone=4;
-			}
-			else if(ch->thread->id != 2 && ch->thread->id != 9 && ch->thread->id != 3 && ch->thread->id != 5 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 4){
-			//else if (ch->thread->id != 5 && ch->thread->id != 3 && ch->thread->id != 4 && ch->thread->id != 6 && pone == 2){
-				//	SPDK_NOTICELOG("9_p:%d, thread %d->send to th9\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th9, rout_submit_request,bdev_io);
-				zeone=5;
-			}	
-			//else if (th4 !=NULL && ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			//else if (ch->thread->id != 3 && ch->thread->id != 2 && ch->thread->id != 4 &&	pone == 2){
-			else{
-
-				//	SPDK_NOTICELOG("4_p:%d, thread %d->send to th4\n",pone, ch->thread->id);
-					spdk_thread_send_msg(th4, rout_submit_request,bdev_io);
-					zeone=0;
-			}
-			}	
-			else{
-				SPDK_NOTICELOG("out_____p:%d,now th_id:%d\n",pone,ch->thread->id);
-				spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-
-			}
-			}*/
-			///////////////////
-			///////////////////
-			///////////////////
-
-
-
-			/*
-			
-			if(bdev_io->u.nvme_passthru.cmd.cdw12 == 1){
-				switch (ch->thread->id){
-				case 6:
-					break;
-				case 7:
-					break;
-				case 8:
-					break;
-				case 9:
-					break;
-				case 10:
-					break;
-				case 2:
-					if(th6 != NULL){
-						SPDK_NOTICELOG("2. 2,6send:%d->%d __ size:%d\n",ch->thread->id, th6->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th6;
-						spdk_thread_send_msg(th6, rout_submit_request, bdev_io);
-					}
-					break;
-				case 3:
-					if(th7 != NULL){
-						SPDK_NOTICELOG("2. 3,7send:%d->%d __ size:%d\n",ch->thread->id, th7->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th7;
-						spdk_thread_send_msg(th7, rout_submit_request, bdev_io);
-					}
-					break;
-				case 4:
-					if(th8 != NULL){
-						SPDK_NOTICELOG("2. 4,8send:%d->%d __ size:%d\n",ch->thread->id, th8->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th8;
-						spdk_thread_send_msg(th8, rout_submit_request, bdev_io);
-					}
-					break;
-				case 5:
-					if(th9 != NULL){
-						SPDK_NOTICELOG("2. 5,9send:%d->%d __ size:%d\n",ch->thread->id, th9->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th9;
-						spdk_thread_send_msg(th9, rout_submit_request, bdev_io);
-					}
-					break;
-				
-				default:
-					if(th10 != NULL){
-						SPDK_NOTICELOG("2. ?,10send:%d->%d __ size:%d\n",ch->thread->id, th10->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th10;
-						spdk_thread_send_msg(th10, rout_submit_request, bdev_io);
-					}
-					break;
-				}
-			}
-			else{
-				switch (ch->thread->id){
-				case 1:
-					break;
-				case 2:
-					break;
-				case 3:
-					break;
-				case 4:
-					break;
-				case 5:
-					break;
-				case 10:
-					break;
-				case 6:
-					if(th2 != NULL){
-						SPDK_NOTICELOG("6,2send:%d->%d __ size:%d\n",ch->thread->id, th2->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th2;
-						spdk_thread_send_msg(th2, rout_submit_request, bdev_io);
-					}
-					break;
-				case 7:
-					if(th3 != NULL){
-						SPDK_NOTICELOG("7,3send:%d->%d __ size:%d\n",ch->thread->id, th3->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th3;
-						spdk_thread_send_msg(th3, rout_submit_request, bdev_io);
-					}
-					break;
-				case 8:
-					if(th4 != NULL){
-						SPDK_NOTICELOG("8,4send:%d->%d __ size:%d\n",ch->thread->id, th4->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th4;
-						spdk_thread_send_msg(th4, rout_submit_request, bdev_io);
-					}
-					break;
-				case 9:
-					if(th5 != NULL){
-						SPDK_NOTICELOG("9,5send:%d->%d __ size:%d\n",ch->thread->id, th5->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th5;
-						spdk_thread_send_msg(th5, rout_submit_request, bdev_io);
-					}
-					break;
-				default:
-					if(th10 != NULL){
-						SPDK_NOTICELOG("?,10send:%d->%d __ size:%d\n",ch->thread->id, th10->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th10;
-						spdk_thread_send_msg(th10, rout_submit_request, bdev_io);
-					}
-					break;
-				}
-			}
-
-			if(ch_b == NULL){
-				struct spdk_thread *thread_now = spdk_get_thread();
-				SPDK_NOTICELOG("2. no move:thread:%d:size-%d\n",thread_now->id,bdev_io->u.nvme_passthru.cmd.cdw12);
-				spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}*/
-
-		
-		/* background : thread 6,7,8,9,10이면 2, 3, 4, 5로 바꿔줌, 2, 3, 4, 5이면 그대로 전송 
-
-		ch_b = NULL;	
-		switch (ch->thread->id){
-				case 1:
-					break;
-				case 2:
-					break;
-				case 3:
-					break;
-				case 4:
-					break;
-				case 5:
-					break;
-				case 6:
-					if(th2 != NULL){
-						SPDK_NOTICELOG("1. back6,2send:%d->%d __ size:%d\n",ch->thread->id, th2->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th2;
-						spdk_thread_send_msg(th2, rout_submit_request2, th2->id);	
-						//spdk_thread_send_msg(th2, rout_submit_request, bdev_io);
-					}
-					break;
-				case 7:
-					if(th3 != NULL){
-						SPDK_NOTICELOG("1. back7,3send:%d->%d __ size:%d\n",ch->thread->id, th3->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th3;
-						spdk_thread_send_msg(th3, rout_submit_request2, th3->id);	
-						//spdk_thread_send_msg(th3, rout_submit_request, bdev_io);
-					}
-					break;
-				case 8:
-					if(th4 != NULL){
-						SPDK_NOTICELOG("1. back8,4send:%d->%d __ size:%d\n",ch->thread->id, th4->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th4;
-						spdk_thread_send_msg(th4, rout_submit_request2, th4->id);	
-					}
-					break;
-				case 9:
-					if(th5 != NULL){
-						SPDK_NOTICELOG("1. back9,5send:%d->%d __ size:%d\n",ch->thread->id, th5->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th5;
-						spdk_thread_send_msg(th5, rout_submit_request2, th5->id);	
-					}
-					break;
-				case 10:
-					if(th2 != NULL){
-						SPDK_NOTICELOG("1. back9,5send:%d->%d __ size:%d\n",ch->thread->id, th2->id, bdev_io->u.nvme_passthru.cmd.cdw12);
-						ch_b = th2;
-						spdk_thread_send_msg(th2, rout_submit_request2, th2->id);	
-					}
-					break;
-		}
-			
-		if(ch_b == NULL){
-				struct spdk_thread *thread_now = spdk_get_thread();
-				SPDK_NOTICELOG("1. background: no move_thread:%d:size-%d\n",thread_now->id,bdev_io->u.nvme_passthru.cmd.cdw12);
-				//spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-				//		bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-				uint32_t blk_size, buf_align;
-				blk_size = 512;
-				if(buc == 0){
-					buc++;
-					buff = spdk_dma_zmalloc(512,512,NULL);
-					snprintf(buff, blk_size, "%s", "Hello World\n");
-				}
-				spdk_bdev_nvme_io_passthru2(bdev_desc, pt_ch->base_ch, buff, 1024, _back_io, buff);
-		}
-		****************************************************************************************/
-
-			
-			//spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-			//		bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-
-			 // foreground I/O 조절 실험
-			/*	
-			if(g_1 %2 == 0){
-				g_1++;
-			
-				if(g_1 ==0){
-					g_1++;
-					f_ch = ch;
-					n_ch = ch;
-				}
-				else if(g_1 % 2 == 1){
-					g_1++;
-					f_ch = ch;
-				}
-				else{
-					g_1++;
-					n_ch = ch;
-				}
-			}
-			if(g_1 > 21){
-				g_1 = 0;
-			}*/
-			/* 여기 해제하기
-			if(g_1 == 0){
-				g_1++;
-				n_ch == ch;
-				f_ch = ch;
-			}
-			n_ch = f_ch;
-			f_ch = ch;
-
-			if(n_ch != ch){
-				ttt = 1;
-			}
-			SPDK_NOTICELOG("before ch:%d,now ch:%d\n",n_ch->thread->id, f_ch->thread->id);*/
-			/*실제 코드
-			struct spdk_thread *thread_now = spdk_get_thread();
-			SPDK_NOTICELOG("thread:%d:size-%d\n",thread_now->id,bdev_io->u.nvme_passthru.cmd.cdw12);
-			spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			*/
-			//if(ch_all3 != NULL && n_ch != NULL && f_ch != NULL && f_ch->thread->id != ch_all3->thread->id && n_ch->thread->id != ch_all3->thread->id && ch_all3->thread->id > 0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1 ){
-			/*	
-			if(ch_all1 != NULL && ch_all1->thread->id != ch->thread->id){
-				SPDK_NOTICELOG("C1_11111__:ch:%d->%d\n",ch->thread->id,ch_all1->thread->id);
-				spdk_thread_send_msg(ch_all1->thread, rout_submit_request, bdev_io);	
-				//spdk_thread_send_msg(ch_all1->thread, rout_submit_request, ch_all1->thread->id);	
-			}
-			else if(ch_all2 != NULL && ch_all2->thread->id != ch->thread->id){
-			//else if(ch_all2 != NULL && n_ch != NULL && f_ch != NULL && f_ch->thread->id != ch_all2->thread->id && n_ch->thread->id != ch_all2->thread->id && ch_all2->thread->id > 0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1 ){
-				SPDK_NOTICELOG("C1_22222___:ch:%d->%d\n",ch->thread->id,ch_all2->thread->id);
-				spdk_thread_send_msg(ch_all2->thread, rout_submit_request, bdev_io);	
-				//spdk_thread_send_msg(ch_all2->thread, rout_submit_request, ch_all2->thread->id);	
-			}*/
-			//}
-			//else{
-			//	g_1++;
-			//SPDK_NOTICELOG("3:%d,2:%d,ch:%d\n",ch_all3->thread->id, ch_all2->thread->id, ch->thread->id);
-			/*
-			spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-					bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			}
-			
-			if(g_1 > 20){
-				g_1 = 0;
-			}*/
-		/*
-			SPDK_NOTICELOG("____ch_all2:%d,___ch_all3:%d,___ch_all4:%d___ch_all5:%d,____ch:%d\n",ch_all2->thread->id, ch_all3->thread->id,ch_all4->thread->id,ch_all5->thread->id,ch->thread->id);
-
-			if(ttt>0){
-				if(ttt > 10)
-					ttt = 0;
-				else
-					ttt++;
-			}
-			else if(ch == n_ch){
-				if(ch_all1 != NULL && ch->thread->id == 6 ){
-					SPDK_NOTICELOG("C1_ch_all1:ch:%d->%d\n",ch->thread->id,ch_all1->thread->id);
-					spdk_thread_send_msg(ch_all1->thread, rout_submit_request2, ch_all1->thread->id);	
-				}
-				else if(ch_all2 != NULL && ch->thread->id == 7){
-					SPDK_NOTICELOG("C1_ch_all2:ch:%d->%d\n",ch->thread->id,ch_all2->thread->id);
-					spdk_thread_send_msg(ch_all2->thread, rout_submit_request2, ch_all2->thread->id);
-				}
-				else if(ch_all3 != NULL && ch->thread->id == 8){
-					SPDK_NOTICELOG("C1_ch_all3:ch:%d->%d\n",ch->thread->id,ch_all3->thread->id);
-					spdk_thread_send_msg(ch_all3->thread, rout_submit_request2, ch_all3->thread->id);
-				}
-				else if(ch_all4 != NULL && ch->thread->id == 9){
-					SPDK_NOTICELOG("C1_ch_all4:ch:%d->%d\n",ch->thread->id,ch_all4->thread->id);
-					spdk_thread_send_msg(ch_all4->thread, rout_submit_request2, ch_all4->thread->id);
-				}
-				else if(ch_all5 != NULL && ch->thread->id == 10){
-					SPDK_NOTICELOG("C1_ch_all15:ch:%d->%d\n",ch->thread->id,ch_all5->thread->id);
-					spdk_thread_send_msg(ch_all5->thread, rout_submit_request2, ch_all5->thread->id);
-				}
-				else{
-					SPDK_NOTICELOG("C1 orig:ch:%d\n",ch->thread->id);
-					spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-						bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-				}
-			}*/
-
-
-			/*
-			if(ch_all1 != NULL && ch_all1->thread->id > 0 && ch_all1->thread->id <= 10 && ch_all1->thread->id != ch->thread->id && g_cnt1 == 1 && ch->thread->id != n_ch->thread->id){
-				SPDK_NOTICELOG("C1_2___:ch:%d->%d\n",ch->thread->id,ch_all2->thread->id);
-				spdk_thread_send_msg(ch_all1->thread, rout_submit_request2, ch_all1->thread->id);	
-			}
-			else if(ch_all2 != NULL && ch_all2->thread->id > 0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1 && ch->thread->id != n_ch->thread->id){
-				SPDK_NOTICELOG("C1_2___:ch:%d->%d\n",ch->thread->id,ch_all2->thread->id);
-				spdk_thread_send_msg(ch_all2->thread, rout_submit_request2, ch_all2->thread->id);	
-			}
-			else if(ch_all3 != NULL && ch_all3->thread->id > 0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1 ){
-				SPDK_NOTICELOG("C1_3___:ch:%d->%d\n",ch->thread->id,ch_all3->thread->id);
-				spdk_thread_send_msg(ch_all3->thread, rout_submit_request2, ch_all3->thread->id);	
-			}
-			else if(ch_all4 != NULL && ch_all4->thread->id > 0 && ch_all4->thread->id <= 10 && ch_all4->thread->id != ch->thread->id && g_cnt4 == 1 ){
-				SPDK_NOTICELOG("C1_4___:ch:%d->%d\n",ch->thread->id,ch_all4->thread->id);
-				spdk_thread_send_msg(ch_all4->thread, rout_submit_request2, ch_all4->thread->id);	
-			}
-			}
-			*/
-			//else {
-			//	ttt++;
-				/*
-				if(ch_all3 != NULL && ch_all3->thread->id > 0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1i && n_ch->thread->id != ch_all3->thread->id ){
-				SPDK_NOTICELOG("C1_/3___:ch:%d->%d\n",ch->thread->id,ch_all3->thread->id);
-				spdk_thread_send_msg(ch_all3->thread, rout_submit_request2, ch_all3->thread->id);	
-				}
-			else if(ch_all2 != NULL && ch_all2->thread->id > 0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1 && ch->thread->id != n_ch->thread->id && n_ch->thread->id != ch_all2->thread->id){
-				SPDK_NOTICELOG("C1_/2___:ch:%d->%d\n",ch->thread->id,ch_all2->thread->id);
-				spdk_thread_send_msg(ch_all2->thread, rout_submit_request2, ch_all2->thread->id);	
-				}
-			else if(ch_all4 != NULL && ch_all4->thread->id > 0 && ch_all4->thread->id <= 10 && ch_all4->thread->id != ch->thread->id && g_cnt4 == 1 && n_ch->thread->id && ch_all4->thread->id){
-				SPDK_NOTICELOG("C1_/4___:ch:%d->%d\n",ch->thread->id,ch_all4->thread->id);
-				spdk_thread_send_msg(ch_all4->thread, rout_submit_request2, ch_all4->thread->id);	
-				}
-			}
-			SPDK_NOTICELOG("C1 orig:ch:%d\n",ch->thread->id);
-			spdk_bdev_nvme_io_passthru(pt_node->base_desc, pt_ch->base_ch, &bdev_io->u.nvme_passthru.cmd,
-					bdev_io->u.nvme_passthru.buf, bdev_io->u.nvme_passthru.cmd.cdw12*512, _pt_complete_io, bdev_io);
-			
-			*/
-			
-		}
-		else if(bdev_io->u.nvme_passthru.cmd.opc==0xD1){
-			if(ch_all3 != NULL && ch_all3->thread->id > 0 && ch_all3->thread->id <= 10 && ch_all3->thread->id != ch->thread->id && g_cnt3 == 1 ){
-				SPDK_NOTICELOG("D1___:ch3:%d\n",ch_all3->thread->id);
-				pt_ch2 = spdk_io_channel_get_ctx(ch_all3);
-				spdk_thread_send_msg(ch_all3->thread, rout_submit_request, bdev_io);
-			}
-			else if(ch_all2 != NULL && ch_all2->thread->id > 0 && ch_all2->thread->id <= 10 && ch_all2->thread->id != ch->thread->id && g_cnt2 == 1 ){
-				SPDK_NOTICELOG("D1___:ch3:%d\n",ch_all2->thread->id);
-				pt_ch2 = spdk_io_channel_get_ctx(ch_all2);
-				spdk_thread_send_msg(ch_all2->thread, rout_submit_request, bdev_io);
-			}
 		}
 		break;
 	default:
