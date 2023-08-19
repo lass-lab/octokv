@@ -12,3 +12,13 @@ Plugin In-Storage Processing in SPDK (SPDK v21.07)
 ```
 git clone https://github.com/lass-lab/octokv.git
 ```
+
+### Build
+```
+./make_spdk.sh /path/to/spdk
+```
+
+### Make
+```
+./make.sh /path/to/spdk
+```
